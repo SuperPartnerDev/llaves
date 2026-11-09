@@ -1,0 +1,22 @@
+# Assigns every new access request to the person who approves it, so GitHub Mobile sends them a
+# push notification. GitHub doesn't notify people about their own activity, and the agent opens the
+# request under the owner's name, so the assignment has to come from github-actions[bot].
+name: Assign request
+on:
+  issues:
+    types: [opened]
+permissions:
+  issues: write
+jobs:
+  assign:
+    # Only in your own copy, never in the public template.
+    if: github.repository != 'SuperPartnerDev/llaves' && contains(github.event.issue.labels.*.name, 'llaves')
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Assign the approver
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPROVER: ${{ vars.LLAVES_APPROVER || github.repository_owner }}
+          NUMBER: ${{ github.event.issue.number }}
+        run: gh issue edit "$NUMBER" --repo "$GITHUB_REPOSITORY" --add-assignee "$APPROVER"
